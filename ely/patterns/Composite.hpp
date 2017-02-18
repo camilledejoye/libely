@@ -51,7 +51,8 @@ private:
 public:
     /// The type of a composit object of type \c Object.
     using CompositeType = Composite< ComponentType >;
-
+    
+    Component() ELY_NOEXCEPT_OR_NOTHROW;
     /// A default virtual destructor for polymorphic uses.
     virtual ~Component() ELY_NOEXCEPT_OR_NOTHROW = default;
 
@@ -59,13 +60,15 @@ public:
     ELY_CONSTEXPR_OR_INLINE bool hasParent() const ELY_NOEXCEPT_OR_NOTHROW;
 
 
-    CompositeType & getParent() const ELY_NOEXCEPT_OR_NOTHROW;
+    CompositeType * getParent() const ELY_NOEXCEPT_OR_NOTHROW;
 
 protected:
     Component< Object > & setParent( CompositeType * aComposite ) ELY_NOEXCEPT_OR_NOTHROW;
 
 
 private:
+    friend class Composite< ComponentType >;
+    
     /// The parent of the component.
     CompositeType * myParent;
 };
@@ -77,14 +80,14 @@ template < class ComponentType >
  * \brief The Composite class
  *
  * The basic implementation needed by any objects which are composits.\n
- * Implement it as follow :\n
+ * Example of use :\n
  * \code
  * class AbstractFile : public ::ely::patterns::Component< AbstractFile > {
  *      // Implementation
  * };
  *
  * class Directory : public ::ely::patterns::Composite< AbstractFile > {
- *     Directory( ... )add
+ *     Directory( ... )
  *         : ::ely::patterns::Composite< Path >( ... )
  *     {}
  *
@@ -104,20 +107,22 @@ class Composite : public::ely::traits::Type< ComponentType >::Base
 {
 public:
     /// The base type of a composite.
-    using CompositeType = typename ::ely::traits::Type< ComponentType >::Base;
+    using ComponentBase = typename ::ely::traits::Type< ComponentType >::Base;
     /// The type of a child.
-    using Child = ::std::unique_ptr< Composite >;
+    using Child = ::std::unique_ptr<  ComponentBase >;
     /// The type of the children list.
     using Children = ::std::list< Child >;
 
 
     template < typename ... Args >
     Composite( Args && ... someArgs );
-
-    template< typename AComponent >
-    Composite< ComponentType > & add( AComponent const & aComponent );
-    template< typename AComponent >
-    Composite< ComponentType > & remove( typename ::ely::traits::Type < AComponent const > &aChildToRemove );
+    
+    virtual ~Composite() = default;
+    
+    
+    Composite< ComponentType > & add( Child aChild );
+    template < typename AComponent, typename ... Args >
+    AComponent * create( Args && ... someArgs );
 
 
     ELY_CONSTEXPR_OR_INLINE Children const & getChildren() const ELY_NOEXCEPT_OR_NOTHROW;

@@ -15,7 +15,7 @@
 #if defined ( ELY_USING_CXX11 )
 
 #   define ELY_ASSERT_MSG( test, message )  static_assert( test, message )
-#   define ELY_ASSERT( test )               ELY_ASSERT_MSG( test, # test )
+#   define ELY_ASSERT( test )               ELY_ASSERT_MSG( test, #test )
 
 #else
 
