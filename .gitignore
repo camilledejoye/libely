@@ -33,3 +33,9 @@ build/
 
 #documentation directory
 doc/
+
+*pro.user
+Makefile
+*.qmake*
+*Debug/
+*Release/

@@ -7,10 +7,10 @@
 CONFIG(debug, debug|release):TARGET = elyd
 else:CONFIG(release, debug|release):TARGET = ely
 TEMPLATE = lib
-CONFIG += staticlib
+CONFIG += staticlib c++14
 CONFIG -= qt
 
-QMAKE_CXXFLAGS += -std=c++11
+#QMAKE_CXXFLAGS += -std=c++11
 
 win32:target.path = $(PWD)/lib/
 else:unix:target.path = $(PWD)/lib/

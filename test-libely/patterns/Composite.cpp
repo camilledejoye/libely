@@ -25,7 +25,7 @@ public:
         : myName( aName )
     {}
 
-    virtual ::std::string toString() const = 0;
+    virtual ::std::string getPath() const = 0;
 
 
     AbstractFile & setName( ::std::string const & aName )
@@ -49,70 +49,50 @@ protected:
 class File : public AbstractFile
 {
 public:
-    static char const EXTENSION_SEPARATOR;
-
     File( ::std::string const & name )
-        : AbstractFile( name ), myExtension()
+        : AbstractFile( name )
     {}
 
-    File( ::std::string const & name, ::std::string extension )
-        : AbstractFile( name ), myExtension( ::std::move( extension ) )
-    {}
-
-    virtual ::std::string toString() const override
+    virtual ::std::string getPath() const override
     {
-        ::std::string completeFilename = getName();
+        ::std::string path;
 
-        if ( false == getExtension().empty() )
-        {
-            completeFilename += EXTENSION_SEPARATOR + getExtension();
+        if ( hasParent() ) {
+            path += getParent()->getPath();
         }
+        
+        path += getName();
 
-        return completeFilename;
+        return path;
     }
-
-
-    File & setExtension( ::std::string extension )
-    {
-        myExtension = ::std::move( extension );
-
-        return *this;
-    }
-
-    ::std::string const & getExtension() const
-    {
-        return myExtension;
-    }
-
-protected:
-    ::std::string myExtension;
 };
-char const File::EXTENSION_SEPARATOR = '.';
 
 
 class Directory : public Composite< AbstractFile >
 {
 public:
-    static char const SEPARATOR;
-
     Directory( ::std::string const & name )
         : Composite< AbstractFile >( name )
     {}
 
-    virtual ::std::string toString() const override
+    virtual ::std::string getPath() const override
     {
         ::std::string path;
 
         if ( hasParent() ) {
-            path += getParent().toString();
-        } else {
-            path += SEPARATOR;
+            path += getParent()->getPath();
+        }
+        
+        path += getName();
+        
+        if ( '/' != path.back() )
+        {
+            path += "/";
         }
 
         return path;
     }
 };
-char const Directory::SEPARATOR = '/';
 
 
 BOOST_AUTO_TEST_SUITE( composite )
@@ -120,28 +100,21 @@ BOOST_AUTO_TEST_SUITE( composite )
 BOOST_AUTO_TEST_CASE( global )
 {
     Directory root( "/" );
-    Directory home( "home" );
-    File logFile( "File", "log" );
 
-    root.add( home );
-    /*
-       .add( Directory( "usr" ) )
-       .add( File( ".test" ) );
+    root.add( ::std::make_unique< Directory >( "test" ) )
+        .add( ::std::make_unique< File >( "aFile" ) );
+    
+    Directory * ely = root.create< Directory >( "home" )->create< Directory >( "ely" );
+    File * file = ely->create< File >( "myFile" );
+    
+   BOOST_CHECK_EQUAL( root.getName(), "/" );
 
-       home.add( Directory( "ely" ) );
-       home.getChildren().back()->add( logFile );
-
-       BOOST_CHECK_EQUAL( root.toString(), "/home/ely/file.log" );
-
-       Directory & homeDirectory = ( Directory & ) * root.getChildren().front();
-       Directory & elyDirectory = ( Directory & ) * homeDirectory.getChildren().front();
-       File & fileFile = ( File & ) * elyDirectory.getChildren().front();
-
-       BOOST_CHECK_EQUAL( elyDirectory.toString(), "ely/file.log" );
-       BOOST_CHECK_EQUAL( fileFile.getName(), "file" );
-       BOOST_CHECK_EQUAL( fileFile.getExtension(), "log" );
-       BOOST_CHECK_EQUAL( fileFile.toString(), "file.log" );
-     */
+   BOOST_CHECK_EQUAL( ely->getName(), "ely" );
+   BOOST_CHECK_EQUAL( file->getName(), "myFile" );
+   BOOST_CHECK_EQUAL( root.hasParent(), false );
+   BOOST_CHECK_EQUAL( ely->hasParent(), true );
+   BOOST_CHECK_EQUAL( file->hasParent(), true );
+   BOOST_CHECK_EQUAL( file->getPath(), "/home/ely/myFile" );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

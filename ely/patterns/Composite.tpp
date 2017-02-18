@@ -5,13 +5,21 @@
 //------------------------------------------------------//
 template < typename Object >
 /*!
+ * \brief Default constructor
+ */
+Component< Object >::Component() ELY_NOEXCEPT_OR_NOTHROW
+    : myParent( nullptr )
+{}
+
+template < typename Object >
+/*!
  * \brief Allow to know if the object has a parent.
  *
  * \return \c true if the object has a parent, \c false otherwise.
  */
 ELY_CONSTEXPR_OR_INLINE bool Component< Object >::hasParent() const ELY_NOEXCEPT_OR_NOTHROW
 {
-    return ( ::ely::utilities::isNull( myParent ) ) ? true : false;
+    return ( ::ely::utilities::isNull( myParent ) ) ? false : true;
 }
 
 template < typename Object >
@@ -23,9 +31,9 @@ template < typename Object >
  *
  * \return A reference to the parent object.
  */
-typename Component< Object >::CompositeType & Component< Object >::getParent() const ELY_NOEXCEPT_OR_NOTHROW
+typename Component< Object >::CompositeType * Component< Object >::getParent() const ELY_NOEXCEPT_OR_NOTHROW
 {
-    return *myParent;
+    return myParent;
 }
 
 
@@ -61,58 +69,48 @@ template < typename ... Args >
  *
  * \param args  The arguments to provide to the constructor of \c ComponentType.
  */
-Composite< ComponentType >::Composite( Args && ... args )
-    : ComponentType( std::forward< Args >( args ) ... ),
+Composite< ComponentType >::Composite( Args && ... someArgs )
+    : ComponentType( std::forward< Args >( someArgs ) ... ),
     myChildren()
 {}
 
 
 template < typename ComponentType >
-template < typename AComponent >
 /*!
  * \brief Add an object which derives from \c ComponentType as a child.
  *
- * \param component The new component to add, it can be a component or a composite.
+ * \param aChild A child to add to the composite.
  *
- * \return A reference on the component added.
+ * \return A reference on the composite.
  */
-Composite< ComponentType > & Composite< ComponentType >::add( AComponent const & aComponent )
+Composite< ComponentType > & Composite< ComponentType >::add( Child aChild )
 {
-    ELY_ASSERT_MSG( ( ::std::is_base_of< CompositeType, AComponent >::value ),
-                    "AComponent must be of type CompositeType" );
-    ELY_ASSERT_MSG( ::std::is_move_constructible< AComponent >::value,
-                    "AComponent must be move constructible" );
-
-    AComponent * t = new AComponent( ::std::move( aComponent ) );
-    //Child newChild( new AComponent( ::std::move( aComponent ) ) );
-
-    //myChildren.emplace_back( newChild.release() );
-
-    //myChildren.back()->setParent( this );
+    myChildren.emplace_back( ::std::move( aChild ) );
+    myChildren.back()->setParent( this );
 
     return *this;
 }
 
 template < typename ComponentType >
-template < typename AComponent >
+template < typename AComponent, typename ... Args >
 /*!
- * \brief Remove a child from the composite.
+ * \brief Create a component of type \c AComponent and add it as a child of the composite.
  *
- * \param component The object to remove.
+ * \param someArgs The list of arguments to forward to the constructor of \c AComponent.
  *
- * \return \c true if any object has been removed, \c false otherwise.
+ * \return A raw pointer to the newly created child.
  */
-Composite< ComponentType > & Composite< ComponentType >::remove( typename ::ely::traits::Type< AComponent const > & aChildToRemove )
+AComponent * Composite< ComponentType >::create( Args && ... someArgs )
 {
-    ELY_ASSERT_MSG( ( ::std::is_base_of< CompositeType, AComponent >::value ),
-                    "AComponent must be of type CompositeType" );
-
-    myChildren.remove_if(   [ &aChildToRemove ] ( Child const & aChild )->bool
-                            {
-                                return *aChild == aChildToRemove;
-                            } );
-
-    return *this;
+    ELY_ASSERT_MSG( ( ::std::is_base_of< ComponentBase, AComponent >::value ),
+                    "AComponent must be of type ComponentBase" );
+    
+    myChildren.emplace_back( ::std::make_unique< AComponent >( ::std::forward< Args >( someArgs ) ... ) );
+    
+    AComponent * createdChild = static_cast< AComponent * >( myChildren.back().get() );
+    createdChild->setParent( this );
+    
+    return createdChild;
 }
 
 
