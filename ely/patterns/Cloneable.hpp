@@ -11,6 +11,8 @@
 
 #include <memory>
 
+#include "ely/traits/Type.hpp"
+
 
 namespace ely
 {
@@ -37,7 +39,7 @@ class AbstractCloneable
 {
 public:
     /// The type return by the \c clone() function.
-    typedef std::unique_ptr< Object > Clone;
+    using Clone = ::std::unique_ptr< typename ::ely::traits::Type< Object >::Base >;
 
     /// Virtual destructor, for a polymorphic usage of the object.
     virtual ~AbstractCloneable() noexcept = default;
@@ -47,24 +49,10 @@ public:
      *
      * \return A pointer, of type \c Clone, to a polymorphic copy of the object.
      */
-    Clone clone() const
-    {
-        return Clone( move( doClone() ) );
-    }
-
-protected:
-    /*!
-     * \brief Create a polymorphic copy of the object.
-     *
-     * Pure virtual function which has to be implement by every derived class.
-     *
-     * \return A pointer of type \c Clone to the polymorphic copy of the object.
-     */
-    virtual Clone doClone() const = 0;
+    virtual Clone clone() const = 0;
 };
 
-#define CLONE( Type )   Clone doClone() const override { return Clone( new Type( *this ) ); \
-}
+#define CLONE( Type )   virtual Clone clone() const override { return ::std::make_unique< Type >( *this ); }
 
 
 } // namespace ::ely::patterns

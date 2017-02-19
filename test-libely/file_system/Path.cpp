@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE( static_functions )
 {
     // fromSystemSeparator
     // With const parameter
-    string newPathString = Path::fromSystemSeparator( systemFilePath );
+    string newPathString = Path::toStandardSeparator( systemFilePath );
 
     BOOST_CHECK_EQUAL( systemFilePath, systemFilePath );
     BOOST_CHECK_EQUAL( newPathString, standardFilePath );
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE( static_functions )
 
     // With non-const parameter
     string nonConstPathString = systemFilePath;
-    newPathString = Path::fromSystemSeparator( nonConstPathString );
+    newPathString = Path::toStandardSeparator( nonConstPathString );
 
     BOOST_CHECK_EQUAL( newPathString, nonConstPathString );
     BOOST_CHECK_EQUAL( nonConstPathString, standardFilePath );
@@ -261,23 +261,23 @@ BOOST_AUTO_TEST_CASE( accessors )
     Path path( systemFilePath );
 
 #if ! defined ( ELY_USING_WIN32_API )
-    string newPath = "/new/path/";
+    string const newPath = "/new/path/";
 #else
     string newPath = "F:\\new\\Path\\";
 #endif
-    string newName = "newName";
+    string const newName = "newName/";
 
-    path.setAccessPath( newPath );
-    path.setName( newName );
-
-    BOOST_CHECK_EQUAL( path.getAccessPath(), Path::stripLastSeparator( newPath ) );
-    BOOST_CHECK_EQUAL( path.getName(), newName );
-
-    path.setAccessPath( Path::stripLastSeparator( newPath ) );
-    path.setName( Path::stripLastSeparator( newName ) );
+    path.set( newPath +
+              newName );
 
     BOOST_CHECK_EQUAL( path.getAccessPath(), Path::stripLastSeparator( newPath ) );
-    BOOST_CHECK_EQUAL( path.getName(), newName );
+    BOOST_CHECK_EQUAL( path.getName(), Path::stripLastSeparator( newName ) );
+
+    path.set( Path::stripLastSeparator( newPath +
+                                        newName ) );
+    
+    BOOST_CHECK_EQUAL( path.getAccessPath(), Path::stripLastSeparator( newPath ) );
+    BOOST_CHECK_EQUAL( path.getName(), Path::stripLastSeparator( newName ) );
 }
 
 BOOST_AUTO_TEST_CASE( other_functions )

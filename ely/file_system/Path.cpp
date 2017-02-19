@@ -2,6 +2,7 @@
 
 
 #include <algorithm>
+#include <functional>
 
 
 namespace ely
@@ -17,64 +18,64 @@ namespace file_system
 /*!
  * \brief Get the access path.
  *
- * Gets the access path of the path given in \p pathString.\n
- * If \p pathString contains no standard separators (\e / ), return \c currentDirectory() .
+ * Gets the access path of the path given in \p aStringPath.\n
+ * If \p aStringPath contains no standard separators (\e / ), return \c currentDirectory .
  *
- * \param pathString  The access path to the target.
+ * \param aStringPath  A string representing the access path to the target.
  *
- * \return The path of the target pointed by \p path.\n
- * Or the value of \c currentDirectory() if \p pathString contains no standard separators.
+ * \return The access path of the target pointed by \p aStringPath.\n
+ * Or an empty string if \p aStringPath is empty.
  */
-std::string Path::dirName( std::string pathString )
+std::string Path::dirName( ::std::string aStringPath )
 {
-    if ( ! pathString.empty() )
+    if ( ! aStringPath.empty() )
     {
-        stripLastSeparator( pathString );
+        stripLastSeparator( aStringPath );
 
-        std::string::size_type lastSeparatorPosition = pathString.find_last_of( standardSeparator() );
+        ::std::string::size_type lastSeparatorPosition = aStringPath.find_last_of( standardSeparator );
 
-        if ( std::string::npos != lastSeparatorPosition ) // last separator found
+        if ( ::std::string::npos != lastSeparatorPosition ) // last separator found
         {
             if ( 0 == lastSeparatorPosition )
             {
-                pathString = standardSeparator();
+                aStringPath = standardSeparator;
             }
             else
             {
-                pathString = pathString.substr( 0, lastSeparatorPosition );
+                aStringPath = aStringPath.substr( 0, lastSeparatorPosition );
             }
         }
-        else if ( parentDirectory() != pathString )
+        else if ( parentDirectory  != aStringPath &&
+                  currentDirectory != aStringPath )
         {
-            pathString = currentDirectory();
+            aStringPath = currentDirectory;
         }
     }
 
-    return pathString;
+    return aStringPath;
 }
 
 /*!
  * \brief Strip directory and suffix from a path.
  *
  * Keeps only the name without neither it's access path or the
- * \p suffix if it ends the name.
+ * \p aSuffix if it ends the name.
  *
- * \param pathString  The full path.
- * \param suffix    The suffix to remove.
+ * \param aStringPath  The full path.
+ * \param aSuffix    The suffix to remove.
  *
- * \return The name without it's access path and the \p suffix if it's provide.
+ * \return The name without it's access path and \p aSuffix if it's provided.n
+ * Or an empty string if \p aStringPath is empty.
  */
-std::string Path::baseName( std::string pathString, const std::string & suffix )
+std::string Path::baseName(::std::string aStringPath, ::std::string const & aSuffix )
 {
-    std::string baseNameReturned;
-
-    if ( ! pathString.empty() )
+    if ( ! aStringPath.empty() )
     {
-        stripLastSeparator( pathString );
+        stripLastSeparator( aStringPath );
 
-        std::string::size_type from = pathString.find_last_of( standardSeparator() );
+        ::std::string::size_type from = aStringPath.find_last_of( standardSeparator );
 
-        if ( std::string::npos != from && pathString.size() > 1 ) // last separator found
+        if ( ::std::string::npos != from && aStringPath.size() > 1 ) // last separator found
         {
             ++from;
         }
@@ -83,59 +84,94 @@ std::string Path::baseName( std::string pathString, const std::string & suffix )
             from = 0;
         }
 
-        std::string::size_type to = pathString.length();
+        ::std::string::size_type length = aStringPath.length() - from;
 
-        if ( ! suffix.empty() )
+        if ( ! aSuffix.empty() )
         {
-            if ( suffix == pathString.substr( pathString.length() - suffix.length() ) ) // pathString ends with suffix
+            if ( aSuffix == aStringPath.substr( aStringPath.length() - aSuffix.length() ) ) // aStringPath ends with suffix
             {
-                to -= suffix.length();
+                length -= aSuffix.length();
             }
         }
 
-        baseNameReturned = std::string( pathString, from, to - from );
+        aStringPath = aStringPath.substr( from, length );
     }
 
-    return baseNameReturned;
+    return aStringPath;
 }
 
 /*!
- * \brief Removes the last separator if it ends the path \p pathString.
+ * \brief Removes the last separator if it ends the path \p aStringPath.
  *
- * \param pathString The path in which the separator will be look for.
+ * \param aStringPath The path in which the separator will be look for.
  *
- * \return \c pathString without the last separator if it was at the end of the path.
+ * \return \c aStringPath without the last separator if it was at the end of the path.
  */
-std::string & Path::stripLastSeparator( std::string & pathString )
+std::string & Path::stripLastSeparator(::std::string & aStringPath )
 {
-    if ( 1 < pathString.size() )
+    if ( 1 < aStringPath.size() ) // If it's not the unix root directory '/'
     {
-        fromSystemSeparator( pathString );
+        toStandardSeparator( aStringPath );
 
-        std::string::iterator lastCharIterator = --pathString.end();
-
-        if ( standardSeparator() == *lastCharIterator )
+        if ( standardSeparator == aStringPath.back() )
         {
-            pathString.erase( lastCharIterator );
+            aStringPath.pop_back();
         }
     }
 
-    return pathString;
+    return aStringPath;
 }
 
 
 /*!
- * \brief Removes the last separator if it ends the path \p pathString.
+ * \brief Removes the last separator if it ends the path \p aStringPath.
  *
- * \param pathString The path in which the separator will be look for.
+ * \param aStringPath The path in which the separator will be look for.
  *
- * \return \c pathString without the last separator if it was at the end of the path.
+ * \return \c aStringPath without the last separator if it was at the end of the path.
  */
-std::string Path::stripLastSeparator( const std::string & pathString )
+std::string Path::stripLastSeparator( ::std::string const & aStringPath )
 {
-    std::string pathStringWithoutLastSeparator( pathString );
+    ::std::string aStringPathWithoutLastSeparator( aStringPath );
 
-    return stripLastSeparator( pathStringWithoutLastSeparator );
+    return stripLastSeparator( aStringPathWithoutLastSeparator );
+}
+
+/*!
+ * \brief Removes the first separator if it begins the path \p aStringPath.
+ *
+ * \param aStringPath The path in which the separator will be look for.
+ *
+ * \return \c aStringPath without the first separator if it was at the begin of the path.
+ */
+std::string & Path::stripFirstSeparator(::std::string & aStringPath )
+{
+    if ( 1 < aStringPath.size() ) // If it's not the unix root directory '/'
+    {
+        toStandardSeparator( aStringPath );
+
+        if ( standardSeparator == aStringPath.front() )
+        {
+            aStringPath.erase( aStringPath.cbegin() );
+        }
+    }
+
+    return aStringPath;
+}
+
+
+/*!
+ * \brief Removes the first separator if it begins the path \p aStringPath.
+ *
+ * \param aStringPath The path in which the separator will be look for.
+ *
+ * \return \c aStringPath without the first separator if it was at the begin of the path.
+ */
+std::string Path::stripFirstSeparator( ::std::string const & aStringPath )
+{
+    ::std::string aStringPathWithoutFirstSeparator( aStringPath );
+
+    return stripFirstSeparator( aStringPathWithoutFirstSeparator );
 }
 
 
@@ -145,18 +181,18 @@ std::string Path::stripLastSeparator( const std::string & pathString )
  * Convert a path to the standard format by replacing
  * the system directory separator by \c '/' .
  *
- * \param pathString  The path to convert.
+ * \param aStringPath  The path to convert.
  *
- * \return The path \p pathString in the standard format.
+ * \return The path \p aStringPath in the standard format.
  */
-std::string & Path::fromSystemSeparator( std::string & pathString )
+std::string & Path::toStandardSeparator( ::std::string & aStringPath )
 {
-    if ( systemSeparator() != standardSeparator() )
+    if ( systemSeparator != standardSeparator )
     {
-        std::replace( pathString.begin(), pathString.end(), systemSeparator(), standardSeparator() );
+        ::std::replace( aStringPath.begin(), aStringPath.end(), systemSeparator, standardSeparator );
     }
 
-    return pathString;
+    return aStringPath;
 }
 
 /*!
@@ -165,15 +201,15 @@ std::string & Path::fromSystemSeparator( std::string & pathString )
  * Convert a path to the standard format by replacing
  * the system directory separator by \c '/' .
  *
- * \param pathString  The path to convert.
+ * \param aStringPath  The path to convert.
  *
- * \return A new string containing the path \p pathString in the standard format.
+ * \return A new string containing the path \p aStringPath in the standard format.
  */
-std::string Path::fromSystemSeparator( const std::string & pathString )
+std::string Path::toStandardSeparator( ::std::string const & aStringPath )
 {
-    std::string standardFilePath( pathString );
+    ::std::string standardFilePath( aStringPath );
 
-    return fromSystemSeparator( standardFilePath );
+    return toStandardSeparator( standardFilePath );
 }
 
 /*!
@@ -183,18 +219,18 @@ std::string Path::fromSystemSeparator( const std::string & pathString )
  * the standard directory separator by \c '/' the one use
  * by the system.
  *
- * \param pathString  The path to convert.
+ * \param aStringPath  The path to convert.
  *
- * \return The path \p pathString in the system format.
+ * \return The path \p aStringPath in the system format.
  */
-std::string & Path::toSystemSeparator( std::string & pathString )
+std::string & Path::toSystemSeparator( ::std::string & aStringPath )
 {
-    if ( systemSeparator() != standardSeparator() )
+    if ( systemSeparator != standardSeparator )
     {
-        std::replace( pathString.begin(), pathString.end(), standardSeparator(), systemSeparator() );
+        ::std::replace( aStringPath.begin(), aStringPath.end(), standardSeparator, systemSeparator );
     }
 
-    return pathString;
+    return aStringPath;
 }
 /*!
  * \brief Convert a path to the system format.
@@ -203,13 +239,13 @@ std::string & Path::toSystemSeparator( std::string & pathString )
  * the standard directory separator by \c '/' the one use
  * by the system.
  *
- * \param pathString  The path to convert.
+ * \param aStringPath  The path to convert.
  *
- * \return A new string containing the path \p pathString in the system format.
+ * \return A new string containing the path \p aStringPath in the system format.
  */
-std::string Path::toSystemSeparator( const std::string & pathString )
+std::string Path::toSystemSeparator( ::std::string const & aStringPath )
 {
-    std::string systemFilePath( pathString );
+    ::std::string systemFilePath( aStringPath );
 
     return toSystemSeparator( systemFilePath );
 }
@@ -224,29 +260,29 @@ std::string Path::toSystemSeparator( const std::string & pathString )
  *
  * Default constructor : create a path targeting the current directory.
  *
- * \sa Path( const std::string & )
- * \sa Path( const Path & )
+ * \sa Path( ::std::string const & )
+ * \sa Path( Path const & )
  * \sa Path( Path && )
  */
 Path::Path() noexcept
-    : myAccessPath( currentDirectory() ),
-    myName( currentDirectory() )
+    : myAccessPath( currentDirectory ),
+    myName( currentDirectory )
 {}
 
 /*!
  * \brief Constructor
  *
- * Create a \c Path object wich refere to the path to file given in \p pathString.
+ * Create a \c Path object wich refere to the path to file given in \p aStringPath.
  *
- * \param pathString  The access path to manage.
+ * \param aStringPath  The access path to manage.
  *
  * \sa Path()
- * \sa Path( const Path & )
+ * \sa Path( Path const & )
  * \sa Path( Path && )
  */
-Path::Path( const std::string & pathString )
-    : myAccessPath( dirName( pathString ) ),
-    myName( baseName( pathString ) )
+Path::Path( ::std::string const & aStringPath )
+    : myAccessPath( dirName( aStringPath ) ),
+    myName( baseName( aStringPath ) )
 {}
 
 /*!
@@ -257,10 +293,10 @@ Path::Path( const std::string & pathString )
  * \param path  The \c Path object to copy.
  *
  * \sa Path()
- * \sa Path( const std::string & )
+ * \sa Path( ::std::string const & )
  * \sa Path( Path && )
  */
-Path::Path( const Path & path ) noexcept
+Path::Path( Path const & path ) noexcept
     : myAccessPath( path.myAccessPath ),
     myName( path.myName )
 {}
@@ -275,38 +311,30 @@ Path::Path( const Path & path ) noexcept
  * \param path  The \c Path object to move.
  *
  * \sa Path()
- * \sa Path( const std::string & )
+ * \sa Path( ::std::string const & )
  * \sa Path( Path && )
  */
 Path::Path( Path && path ) noexcept
-    : myAccessPath( std::move( path.myAccessPath ) ),
-    myName( std::move( path.myName ) )
+    : myAccessPath( ::std::move( path.myAccessPath ) ),
+    myName( ::std::move( path.myName ) )
 {}
 
 /*!
  * \brief Assignment operator
  *
- * Replace the path currently manage by \p pathString.
+ * Replace the path currently manage by \p aStringPath.
  *
- * \param pathString  The new path to manage.
+ * \param aStringPath  The new path to manage.
  *
  * \return A reference on the current object.
  *
- * \sa operator =( const Path & )
+ * \sa operator =( Path const & )
  * \sa operator =( Path && )
  */
-Path & Path::operator =( const std::string & pathString ) noexcept
+Path & Path::operator =( ::std::string const & aStringPath )
 {
-    try
-    {
-        myAccessPath = dirName( pathString );
-        myName = baseName( pathString );
-    }
-    catch ( ... )
-    {
-        // TODO : print debug infos ?
-        static_cast< void >( 0 );
-    }
+    myAccessPath = dirName( aStringPath );
+    myName = baseName( aStringPath );
 
     return *this;
 }
@@ -320,10 +348,10 @@ Path & Path::operator =( const std::string & pathString ) noexcept
  *
  * \return A reference on the current object.
  *
- * \sa operator =( const std::string & )
+ * \sa operator =( ::std::string const & )
  * \sa operator =( Path && )
  */
-Path & Path::operator =( const Path & path ) noexcept
+Path & Path::operator =( Path const & path ) noexcept
 {
     myAccessPath = path.myAccessPath;
     myName = path.myName;
@@ -340,32 +368,16 @@ Path & Path::operator =( const Path & path ) noexcept
  *
  * \return A Reference on the current object.
  *
- * \sa operator =( const std::string & )
- * \sa operator =( const Path & )
+ * \sa operator =( ::std::string const & )
+ * \sa operator =( Path const & )
  */
 Path & Path::operator =( Path && path ) noexcept
 {
-    myAccessPath = std::move( path.myAccessPath );
-    myName = std::move( path.myName );
+    myAccessPath = ::std::move( path.myAccessPath );
+    myName = ::std::move( path.myName );
 
     return *this;
 }
-
-
-//
-// Public functions
-//
-
-/*!
- * \brief Convert an \c Path object to a string
- *
- * \return The path to the file manage by the object.
- */
-std::string Path::toString() const
-{
-    return ( getAccessPath() == getName() ) ? getAccessPath() : getAccessPath() + standardSeparator() + getName();
-}
-
 
 //
 // Accessors
@@ -376,24 +388,94 @@ std::string Path::toString() const
  *
  * \return The name of the path's target.
  */
-std::string Path::getName() const noexcept
+std::string const & Path::getName() const noexcept
 {
     return myName;
 }
 
+/*!
+ * \brief Accessor
+ *
+ * Set a new access path and a new name based on \c aStringPath .
+ *
+ * \param aStringPath The new path.
+ */
+Path & Path::setName( ::std::string const & aName )
+{
+    myName = aName;
+    
+    return *this;
+}
+
 
 //
-// Protected functions
+// Public functions
 //
 
 /*!
- * \brief Clone the current object.
- *
- * \return A dynamic copy of the current object.
+ * \brief Concatenate two pathes.
+ * 
+ * 
+ * 
+ * \param aPath The path to concatenate with.
+ * \return 
  */
-Path::Clone Path::doClone() const
+Path & Path::add( Path const & aPath )
 {
-    return Clone( new Path( *this ) );
+    return add( aPath.toString() );
+}
+
+Path & Path::add( std::string const & aString )
+{
+    if ( ! aString.empty() )
+    {
+        if ( parentDirectory == aString.substr( 0, 2 ) )
+        {
+            set( myAccessPath +
+                 standardSeparator +
+                 stripFirstSeparator( aString.substr( 2 ) ) );
+        }
+        else if ( currentDirectory[ 0 ] == aString.front() )
+        {
+            set( toString() +
+                 standardSeparator +
+                 stripFirstSeparator( aString.substr( 1 ) ) );
+        }
+        else if ( standardSeparator == aString.front() )
+        {
+            set( toString() +
+                 aString );
+        }
+        else
+        {
+            set( toString() +
+                 standardSeparator +
+                 aString );
+        }
+    }
+    
+    return *this;
+}
+
+/*!
+ * \brief Convert an \c Path object to a string
+ * 
+ * \param aType The desired type of separator.
+ *
+ * \return The path to the file manage by the object.
+ */
+std::string Path::toString( Separator aType ) const
+{
+    ::std::string stringPath = ( getAccessPath() == getName() )
+                               ? getAccessPath()
+                               : getAccessPath() + standardSeparator + getName();
+    
+    if ( System == aType )
+    {
+        toSystemSeparator( stringPath );
+    }
+    
+    return stringPath;
 }
 
 

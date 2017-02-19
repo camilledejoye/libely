@@ -21,7 +21,7 @@ namespace file_system
 /*!
  * \brief The FilePath class
  *
- * Represents the path of a file which is a real file, not a directy.\n\n
+ * Represents the path of a file which is a real file, not a directory.\n\n
  *
  * This class allow to use a path idependently of the operating system.\n
  * This is done by using the character \e / as directory seprator whatever the platform.\n\n
@@ -46,10 +46,14 @@ public:
     FilePath & operator =( FilePath && path ) noexcept;
 
 
-    std::string getName() const noexcept override;
+    virtual std::string const & getName() const noexcept override;
+    virtual FilePath & setName( ::std::string const & aName ) override;
 
     std::string getExtension() const noexcept;
     void setExtension( const std::string & extension = std::string() ) noexcept;
+    
+    
+    CLONE( FilePath )
 
 private:
     static constexpr char extensionSeparator() noexcept;
@@ -57,10 +61,7 @@ private:
 
     FilePath() = delete;
 
-
-    Clone doClone() const override;
-
-
+    ::std::string myFullName;
     std::string myExtension;
 };
 
@@ -68,23 +69,6 @@ private:
 //
 // Accessors
 //
-
-/*!
- * \brief Accessor
- *
- * \return The name of the file with its extension.
- */
-inline std::string FilePath::getName() const noexcept
-{
-    std::string fullName( myName );
-
-    if ( false == myExtension.empty() )
-    {
-        fullName += extensionSeparator() + myExtension;
-    }
-
-    return fullName;
-}
 
 /*!
  * \brief Accessor
@@ -105,6 +89,15 @@ inline std::string FilePath::getExtension() const noexcept
 inline void FilePath::setExtension( const std::string & extension ) noexcept
 {
     myExtension = extension;
+    
+    if ( myExtension.empty() )
+    {
+        myFullName = myName;
+    }
+    else
+    {
+        myFullName = myName + extensionSeparator() + myExtension;
+    }
 }
 
 

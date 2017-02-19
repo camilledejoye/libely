@@ -135,35 +135,47 @@ BOOST_AUTO_TEST_CASE( accessors )
     FilePath filePath( systemFilePath );
 
 #if ! defined ( ELY_USING_WIN32_API )
-    string newFilePath = "/new/path/";
+    string const stringFilePath = "/new/path/";
 #else
     string newFilePath = "F:\\new\\FilePath\\";
 #endif
-    string newName = "newName";
-    string newExtension = "newExtension";
+    string const fileName = "name";
+    string const fileExtension = "ext";
+    string const fullName = fileName + "." + fileExtension;
+    string const fullPath = stringFilePath + fullName;
+    string const newName = "newName";
+    string const newExtension = "newExtension";
+    string const newFullName = newName + "." + newExtension;
 
-    filePath.setAccessPath( newFilePath );
-    filePath.setName( newName );
-    filePath.setExtension( newExtension );
+    filePath.set( fullPath );
 
 
-    BOOST_CHECK_EQUAL( filePath.getAccessPath(), FilePath::stripLastSeparator( newFilePath ) );
-    BOOST_CHECK_EQUAL( filePath.getName(), newName + "." + newExtension );
+    BOOST_CHECK_EQUAL( filePath.getAccessPath(), FilePath::stripLastSeparator( stringFilePath ) );
+    BOOST_CHECK_EQUAL( filePath.getName(), fullName );
+    BOOST_CHECK_EQUAL( filePath.getExtension(), fileExtension );
+    
+    filePath.setName( newFullName );
+    BOOST_CHECK_EQUAL( filePath.getName(), newFullName );
     BOOST_CHECK_EQUAL( filePath.getExtension(), newExtension );
-
-    filePath.setExtension();
-    BOOST_CHECK_EQUAL( filePath.getName(), newName );
+    
+    filePath.setName( fileName );
+    BOOST_CHECK_EQUAL( filePath.getName(), fileName );
     BOOST_CHECK_EQUAL( filePath.getExtension().empty(), true );
-
-    filePath.setExtension( newExtension );
-    BOOST_CHECK_EQUAL( filePath.getName(), newName + "." + newExtension );
-    BOOST_CHECK_EQUAL( filePath.getExtension(), newExtension );
+    
+    filePath.setExtension( fileExtension );
+    BOOST_CHECK_EQUAL( filePath.getName(), fullName );
+    BOOST_CHECK_EQUAL( filePath.getExtension(), fileExtension );
+    
+    filePath.setExtension();
+    BOOST_CHECK_EQUAL( filePath.getName(), fileName );
+    BOOST_CHECK_EQUAL( filePath.getExtension().empty(), true );
 }
 
 BOOST_AUTO_TEST_CASE( other_functions )
 {
     FilePath filePath( systemFilePath );
-
+    
+    BOOST_CHECK_EQUAL( systemFilePath, standardFilePath );
     BOOST_CHECK_EQUAL( filePath.toString(), standardFilePath );
 }
 

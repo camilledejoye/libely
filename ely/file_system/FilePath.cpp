@@ -59,9 +59,10 @@ string FilePath::extractExtension( const string & filename, const char separator
  */
 FilePath::FilePath( const string & filePathString )
     : Path( filePathString ),
-    myExtension( extractExtension( myName ) )
+      myExtension( extractExtension( myName ) )
 {
-    myName = baseName( myName, extensionSeparator() + myExtension );
+    myFullName = myName;
+    myName = baseName( myFullName, extensionSeparator() + myExtension );
 }
 
 /*!
@@ -77,7 +78,8 @@ FilePath::FilePath( const string & filePathString )
  */
 FilePath::FilePath( const FilePath & filePath ) noexcept
     : Path( filePath ),
-    myExtension( filePath.myExtension )
+      myFullName( filePath.myFullName ),
+      myExtension( filePath.myExtension )
 {}
 
 /*!
@@ -95,7 +97,8 @@ FilePath::FilePath( const FilePath & filePath ) noexcept
  */
 FilePath::FilePath( FilePath && filePath ) noexcept
     : Path( std::forward< FilePath >( filePath ) ),
-    myExtension( std::move( filePath.myExtension ) )
+      myFullName( ::std::move( filePath.myFullName ) ),
+      myExtension( std::move( filePath.myExtension ) )
 {}
 
 /*!
@@ -114,7 +117,8 @@ FilePath & FilePath::operator =( const string & filePathString ) noexcept
 {
     Path::operator =( filePathString );
     myExtension = extractExtension( myName );
-    myName = baseName( myName, extensionSeparator() + myExtension );
+    myFullName = myName;
+    myName = baseName( myFullName, extensionSeparator() + myExtension );
 
     return *this;
 }
@@ -134,6 +138,7 @@ FilePath & FilePath::operator =( const string & filePathString ) noexcept
 FilePath & FilePath::operator =( const FilePath & filePath ) noexcept
 {
     Path::operator =( filePath );
+    myFullName = filePath.myFullName;
     myExtension = filePath.myExtension;
 
     return *this;
@@ -154,6 +159,7 @@ FilePath & FilePath::operator =( const FilePath & filePath ) noexcept
 FilePath & FilePath::operator =( FilePath && filePath ) noexcept
 {
     Path::operator =( filePath );
+    myFullName = ::std::move( filePath.myFullName );
     myExtension = std::move( filePath.myExtension );
 
     return *this;
@@ -161,17 +167,27 @@ FilePath & FilePath::operator =( FilePath && filePath ) noexcept
 
 
 //
-// Private functions
+// Accessors
 //
 
 /*!
- * \brief Clone the current object.
+ * \brief Accessor
  *
- * \return A dynamic copy of the current object.
+ * \return The name of the file with its extension.
  */
-FilePath::Clone FilePath::doClone() const
+std::string const & FilePath::getName() const noexcept
 {
-    return Clone( new FilePath( *this ) );
+    return myFullName;
+}
+
+FilePath & FilePath::setName( ::std::string const & aName )
+{
+    myExtension = extractExtension( aName );
+    
+    myFullName = aName;
+    myName = baseName( myFullName, extensionSeparator() + myExtension );
+    
+    return *this;
 }
 
 

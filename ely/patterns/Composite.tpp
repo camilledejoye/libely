@@ -102,7 +102,8 @@ template < typename AComponent, typename ... Args >
  */
 AComponent * Composite< ComponentType >::create( Args && ... someArgs )
 {
-    ELY_ASSERT_MSG( ( ::std::is_base_of< ComponentBase, AComponent >::value ),
+    ELY_ASSERT_MSG( ( ::std::is_base_of< typename ::ely::traits::Type< ComponentType >::Base,
+                                         AComponent >::value ),
                     "AComponent must be of type ComponentBase" );
     
     myChildren.emplace_back( ::std::make_unique< AComponent >( ::std::forward< Args >( someArgs ) ... ) );

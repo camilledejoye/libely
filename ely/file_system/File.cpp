@@ -155,7 +155,9 @@ bool File::rename( const std::string & filePathString )
     close();
 
     FilePath newFilePath( FilePath::baseName( filePathString ) );
-    newFilePath.setAccessPath( myFilePath.getAccessPath() );
+    newFilePath.set( myFilePath.getAccessPath() +
+                     '/' +
+                     newFilePath.getName() );
 
     // TODO : manage error :  when rename != 0 and why ?
     // new name already exists ? etc.

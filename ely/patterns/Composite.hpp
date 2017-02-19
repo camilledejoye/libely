@@ -44,13 +44,9 @@ template < class Object >
  */
 class Component
 {
-private:
-    /// The base type of the component.
-    using ComponentType = typename ::ely::traits::Type< Object >::Base;
-
 public:
-    /// The type of a composit object of type \c Object.
-    using CompositeType = Composite< ComponentType >;
+    /// The type of a composite object of type \c Object.
+    using CompositeType = Composite< Object >;
     
     Component() ELY_NOEXCEPT_OR_NOTHROW;
     /// A default virtual destructor for polymorphic uses.
@@ -67,7 +63,7 @@ protected:
 
 
 private:
-    friend class Composite< ComponentType >;
+    friend class Composite< Object >;
     
     /// The parent of the component.
     CompositeType * myParent;
@@ -106,10 +102,8 @@ template < class ComponentType >
 class Composite : public::ely::traits::Type< ComponentType >::Base
 {
 public:
-    /// The base type of a composite.
-    using ComponentBase = typename ::ely::traits::Type< ComponentType >::Base;
     /// The type of a child.
-    using Child = ::std::unique_ptr<  ComponentBase >;
+    using Child = ::std::unique_ptr<  typename ::ely::traits::Type< ComponentType >::Base >;
     /// The type of the children list.
     using Children = ::std::list< Child >;
 
@@ -117,7 +111,8 @@ public:
     template < typename ... Args >
     Composite( Args && ... someArgs );
     
-    virtual ~Composite() = default;
+    /// A default virtual destructor for polymorphic uses.
+    virtual ~Composite() ELY_NOEXCEPT_OR_NOTHROW = default;
     
     
     Composite< ComponentType > & add( Child aChild );
